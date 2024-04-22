@@ -1,0 +1,9 @@
+name = "ohkami-urlshortener"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-04-20"
+
+[build]
+command = "cargo install -q worker-build && worker-build --release"
+
+[env.dev]
+build = { command = "cargo install -q worker-build && worker-build --dev -- --features DEBUG" }
