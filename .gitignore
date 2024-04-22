@@ -4,10 +4,11 @@
 **/*.rs.bk
 wasm-pack.log
 
-build/
+/build
 /target
 /dist
 
 # wrangler files
 .wrangler
 .dev.vars
+wrangler.toml
