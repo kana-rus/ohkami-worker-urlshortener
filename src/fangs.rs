@@ -40,3 +40,17 @@ impl FangAction for LayoutFang {
         }
     }
 }
+
+#[cfg(feature="DEBUG")]
+#[derive(Clone)]
+pub struct LoggerFang;
+#[cfg(feature="DEBUG")]
+impl FangAction for LoggerFang {
+    async fn fore<'a>(&'a self, req: &'a mut Request) -> Result<(), Response> {
+        worker::console_log!("req: {req:#?}");
+        Ok(())
+    }
+    async fn back<'a>(&'a self, res: &'a mut Response) {
+        worker::console_log!("res: {res:#?}");
+    }
+}

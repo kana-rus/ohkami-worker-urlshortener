@@ -19,4 +19,4 @@ ohkami = { git = "https://github.com/kana-rus/ohkami.git", features = ["rt_worke
 worker = { version = "0.1.0" }
 
 yarte  = { version = "0.15.7" }
-uuid   = { version = "1.8.0", features = ["v4", "fast-rng"] }
+# uuid   = { version = "1.8.0", features = ["v4", "js"] }

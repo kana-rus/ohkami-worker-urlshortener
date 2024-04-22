@@ -1,8 +1,12 @@
 mod errors;
+use std::borrow::Cow;
+
 use errors::AppError;
 
 mod fangs;
 use fangs::LayoutFang;
+#[cfg(feature="DEBUG")]
+use fangs::LoggerFang;
 
 mod helpers;
 use helpers::{create_key, AssertSend};
@@ -19,7 +23,12 @@ async fn my_worker() -> Ohkami {
     #[cfg(feature = "DEBUG")]
     console_error_panic_hook::set_once();
 
-    Ohkami::with(LayoutFang, (
+    #[cfg(not(feature="DEBUG"))]
+    let fangs = LayoutFang;
+    #[cfg(feature="DEBUG")]
+    let fangs = (LoggerFang, LayoutFang);
+
+    Ohkami::with(fangs, (
         "/".GET(index),
         "/create".POST(create),
     ))
@@ -38,7 +47,7 @@ async fn my_worker() -> Ohkami {
             style="width: 80%;"
         />
         &nbsp;
-        <button type="submit"></button>
+        <button type="submit">Create</button>
     </form>
 </div>
 "#)]
@@ -59,7 +68,7 @@ async fn index() -> IndexPage {
 
 #[Payload(URLEncoded/D)]
 struct CreateShortenURLForm<'req> {
-    url: &'req str,
+    url: Cow<'req, str>,
 }
 
 #[derive(Template)]
@@ -87,16 +96,20 @@ impl IntoResponse for CreatedPage {
 }
 
 async fn create(
+    ctx:  &worker::Context,
     env:  &worker::Env,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedPage, AppError> {
-    Url::parse(form.url).map_err(|e| AppError::Validation(format!(
+    Url::parse(&form.url).map_err(|e| AppError::Validation(format!(
         "Invalid URL: {e}"
     )))?;
 
+    worker::console_log!("Got URL: {}", &form.url);
+
     let key = AssertSend(worker::send::SendFuture::new(create_key(
+        ctx,
         env.kv("KV").unwrap(),
-        form.url
+        &form.url
     ))).await?;
     
     Ok(CreatedPage {
