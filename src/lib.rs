@@ -1,21 +1,20 @@
 mod errors;
-use std::borrow::Cow;
-
 use errors::AppError;
 
 mod fangs;
 use fangs::LayoutFang;
-#[cfg(feature="DEBUG")]
-use fangs::LoggerFang;
 
 mod helpers;
 use helpers::{create_key, AssertSend};
+
+mod js;
 
 use ohkami::prelude::*;
 use ohkami::typed::Payload;
 use ohkami::builtin::payload::URLEncoded;
 use yarte::Template;
 use worker::Url;
+use std::borrow::Cow;
 
 
 #[ohkami::worker]
@@ -23,12 +22,7 @@ async fn my_worker() -> Ohkami {
     #[cfg(feature = "DEBUG")]
     console_error_panic_hook::set_once();
 
-    #[cfg(not(feature="DEBUG"))]
-    let fangs = LayoutFang;
-    #[cfg(feature="DEBUG")]
-    let fangs = (LoggerFang, LayoutFang);
-
-    Ohkami::with(fangs, (
+    Ohkami::with(LayoutFang, (
         "/".GET(index),
         "/create".POST(create),
     ))

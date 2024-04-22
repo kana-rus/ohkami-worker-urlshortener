@@ -1,4 +1,5 @@
 use crate::AppError;
+use crate::js;
 use std::sync::Arc;
 use worker::send::SendWrapper;
 
@@ -14,9 +15,11 @@ pub async fn create_key(
     worker::console_log!("`created_key` is called");
 
     let new_key = Arc::new(loop {
-        let key = {
-            let rand: f64 = worker::js_sys::Math::random(); // \in [0, 1)
-            String::from(&rand.to_string()[2..])
+        let uuid = js::randomUUID();
+        let key  = {
+            let mut key = uuid;
+            unsafe {key.as_mut_vec().truncate(6)}
+            key
         };
 
         worker::console_log!("generated key: `{key}`");
