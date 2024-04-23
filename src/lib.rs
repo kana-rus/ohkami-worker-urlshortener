@@ -4,7 +4,7 @@ mod helpers;
 mod js;
 
 use errors::AppError;
-use fangs::LayoutFang;
+use fangs::{LayoutFang, CSRFang};
 use helpers::{create_key, get_original_url};
 
 use ohkami::prelude::*;
@@ -20,7 +20,7 @@ async fn my_worker() -> Ohkami {
     #[cfg(feature = "DEBUG")]
     console_error_panic_hook::set_once();
 
-    Ohkami::with(LayoutFang, (
+    Ohkami::with((LayoutFang, CSRFang), (
         "/"
             .GET(index),
         "/create"
@@ -46,8 +46,7 @@ async fn my_worker() -> Ohkami {
         <button type="submit">Create</button>
     </form>
 </div>
-"#)]
-struct IndexPage;
+"#)] struct IndexPage;
 impl IntoResponse for IndexPage {
     fn into_response(self) -> Response {
         match self.call() {
@@ -72,10 +71,11 @@ struct CreateShortenURLForm<'req> {
 #[template(src=r#"
 <div>
     <h2>Created!</h2>
-    <a href="{{ shorten_url }}">Access to it</a>
+    <a href="{{ shorten_url }}">
+        {{ shorten_url }}
+    </a>
 </div>
-"#)]
-struct CreatedPage {
+"#)] struct CreatedPage {
     shorten_url: String,
 }
 impl IntoResponse for CreatedPage {
@@ -93,8 +93,7 @@ impl IntoResponse for CreatedPage {
     <h2>Error!</h2>
     <a href="/">Back to top</a>
 </div>
-"#)]
-struct ErrorPage;
+"#)] struct ErrorPage;
 impl IntoResponse for ErrorPage {
     fn into_response(self) -> Response {
         match self.call() {
@@ -137,7 +136,7 @@ async fn create(
     ).await?;
     
     Ok(CreatedOrErrorPage::Created {
-        shorten_url: format!("/{key}"),
+        shorten_url: format!("https://ohkami-urlshortener.kanarus.workers.dev/{key}"),
     })
 }
 

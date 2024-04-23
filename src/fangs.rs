@@ -41,16 +41,15 @@ impl FangAction for LayoutFang {
     }
 }
 
-#[cfg(feature="DEBUG")]
 #[derive(Clone)]
-pub struct LoggerFang;
-#[cfg(feature="DEBUG")]
-impl FangAction for LoggerFang {
+pub struct CSRFang;
+impl FangAction for CSRFang {
     async fn fore<'a>(&'a self, req: &'a mut Request) -> Result<(), Response> {
-        worker::console_log!("req: {req:#?}");
-        Ok(())
-    }
-    async fn back<'a>(&'a self, res: &'a mut Response) {
-        worker::console_log!("res: {res:#?}");
+        (req.headers.Origin() == Some("https://ohkami-urlshortener.kanarus.workers.dev"))
+            .then_some(())
+            .ok_or_else(|| {
+                worker::console_warn!("Unexpected request from {}", req.headers.Origin().unwrap_or("unkown origin"));
+                Response::Forbidden()
+            })
     }
 }
