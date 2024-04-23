@@ -1,17 +1,20 @@
 use ohkami::{Response, IntoResponse, Request, FromRequest};
 use ohkami::{typed::Payload, builtin::payload::URLEncoded};
-use std::{borrow::Cow, future::Future};
 use worker::send::{SendFuture, SendWrapper};
+use worker::kv::{KvStore, ToRawKvValue};
+use std::{borrow::Cow, future::Future};
 use crate::{pages, AppError};
 
 
 pub use pages::IndexPage;
+
 
 #[Payload(URLEncoded/D)]
 #[derive(Debug)]
 pub struct CreateShortenURLForm<'req> {
     pub url: Cow<'req, str>,
 }
+
 
 pub enum CreatedOrErrorPage {
     Created { shorten_url: String },
@@ -26,7 +29,8 @@ impl IntoResponse for CreatedOrErrorPage {
     }
 }
 
-pub struct KV(SendWrapper<worker::kv::KvStore>);
+
+pub struct KV(SendWrapper<KvStore>);
 impl<'req> FromRequest<'req> for KV {
     type Error = AppError;
     fn from_request(req: &'req Request) -> Option<Result<Self, Self::Error>> {
@@ -37,7 +41,7 @@ impl<'req> FromRequest<'req> for KV {
 }
 impl KV {
     pub fn get<'kv>(&'kv self,
-        key: impl AsRef<str> + 'kv,
+        key: &'kv str,
     ) -> impl Future<Output = Result<Option<String>, AppError>> + Send + 'kv {
         SendFuture::new(async move {
             self.0.get(key.as_ref())
@@ -47,11 +51,11 @@ impl KV {
     }
 
     pub fn put<'kv>(&'kv self,
-        key:   impl AsRef<str> + 'kv,
-        value: impl AsRef<str> + 'kv,
+        key:   &'kv str,
+        value: impl ToRawKvValue + 'kv,
     ) -> impl Future<Output = Result<(), AppError>> + Send + 'kv {
         SendFuture::new(async move {
-            self.0.put(key.as_ref(), value.as_ref()).unwrap()
+            self.0.put(key.as_ref(), value).unwrap()
                 .execute().await.map_err(AppError::kv)
         })
     }
