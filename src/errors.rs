@@ -3,6 +3,7 @@ use worker::send::SendWrapper;
 use crate::helpers::*;
 
 
+#[allow(unused)]
 pub enum AppError {
     RenderingHTML(yarte::Error),
     Validation(String),

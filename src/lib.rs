@@ -92,14 +92,44 @@ impl IntoResponse for CreatedPage {
     }
 }
 
+#[derive(Template)]
+#[template(src=r#"
+<div>
+    <h2>Error!</h2>
+    <a href="/">Back to top</a>
+</div>
+"#)]
+struct ErrorPage;
+impl IntoResponse for ErrorPage {
+    fn into_response(self) -> Response {
+        match self.call() {
+            Ok(html) => Response::OK().with_html(html),
+            Err(err) => AppError::RenderingHTML(err).into_response(),
+        }
+    }
+}
+
+enum CreatedOrErrorPage {
+    Created { shorten_url: String },
+    Error,
+}
+impl IntoResponse for CreatedOrErrorPage {
+    fn into_response(self) -> Response {
+        match self {
+            Self::Created { shorten_url } => CreatedPage { shorten_url }.into_response(),
+            Self::Error                   => ErrorPage.into_response(),
+        }
+    }
+}
+
 async fn create(
     ctx:  &worker::Context,
     env:  &worker::Env,
     form: CreateShortenURLForm<'_>,
-) -> Result<CreatedPage, AppError> {
-    Url::parse(&form.url).map_err(|e| AppError::Validation(format!(
-        "Invalid URL: {e}"
-    )))?;
+) -> Result<CreatedOrErrorPage, AppError> {
+    if let Err(_) = Url::parse(&form.url) {
+        return Ok(CreatedOrErrorPage::Error)
+    }
 
     worker::console_log!("Got form: {form:?}");
 
@@ -111,15 +141,14 @@ async fn create(
         )
     ).await?;
     
-    Ok(CreatedPage {
+    Ok(CreatedOrErrorPage::Created {
         shorten_url: format!("/{key}"),
     })
 }
 
 
-async fn redirect_from_shorten_url(
-    shorten_url: &str,
-    env:         &worker::Env,
+async fn redirect_from_shorten_url(shorten_url: &str,
+    env: &worker::Env,
 ) -> Result<status::Found, AppError> {
     match worker::send::SendFuture::new(
         get_original_url(
