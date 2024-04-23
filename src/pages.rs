@@ -47,6 +47,7 @@ page!(IndexPage = (;;) => r#"
         <h2>Create shorten URL!</h2>
         <form action="/create" method="post">
             <input
+                autofocus
                 type="text"
                 name="url"
                 autocomplete="off"
