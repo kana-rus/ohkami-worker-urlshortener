@@ -1,5 +1,5 @@
 use ohkami::prelude::*;
-use crate::{ORIGIN, pages::Layout};
+use crate::pages::Layout;
 
 
 #[derive(Clone)]
@@ -20,7 +20,8 @@ pub struct CSRFang;
 impl FangAction for CSRFang {
     async fn fore<'a>(&'a self, req: &'a mut Request) -> Result<(), Response> {
         let referer = req.headers.Referer();
-        (referer == Some(&format!("{ORIGIN}/")))
+        let host    = req.headers.Host().ok_or_else(|| Response::BadRequest())?;
+        (referer == Some(&format!("https://{host}/")))
             .then_some(())
             .ok_or_else(|| {
                 worker::console_warn!("Unexpected request from {}", referer.unwrap_or("no referer"));
