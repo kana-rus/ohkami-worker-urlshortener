@@ -20,13 +20,14 @@ async fn my_worker() -> Ohkami {
     #[cfg(feature = "DEBUG")]
     console_error_panic_hook::set_once();
 
-    Ohkami::with((LayoutFang, CSRFang), (
+    Ohkami::with(LayoutFang, (
         "/"
             .GET(index),
-        "/create"
-            .POST(create),
         "/:shorten_url"
             .GET(redirect_from_shorten_url),
+        "/create".By(Ohkami::with(CSRFang,
+            "/".POST(create),
+        ))
     ))
 }
 
