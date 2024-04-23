@@ -26,9 +26,9 @@ impl IntoResponse for AppError {
                 worker::console_error!("Validation failed: {msg}");
                 Response::BadRequest()
             }
-            Self::KV(kve) => {
-                worker::console_error!("Error from KV: {kve}");
-                Response::BadRequest()
+            Self::KV(err) => {
+                worker::console_error!("Error from KV: {err}");
+                Response::InternalServerError()
             }
             Self::Worker(err) => {
                 worker::console_error!("Error in Worker: {err}");
