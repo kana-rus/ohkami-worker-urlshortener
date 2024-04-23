@@ -11,6 +11,8 @@ use models::{IndexPage, CreatedOrErrorPage, CreateShortenURLForm, KV};
 use ohkami::prelude::*;
 use ohkami::typed::status;
 
+const ORIGIN: &str = "https://ohkami-urlshortener.kanarus.workers.dev";
+
 
 #[ohkami::worker]
 async fn my_worker() -> Ohkami {
@@ -64,6 +66,6 @@ async fn create(
     kv.put(&key.clone(), form.url).await?;
     
     Ok(CreatedOrErrorPage::Created {
-        shorten_url: format!("https://ohkami-urlshortener.kanarus.workers.dev/{key}"),
+        shorten_url: format!("{ORIGIN}/{key}"),
     })
 }

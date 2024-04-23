@@ -8,13 +8,11 @@ use crate::{pages, AppError};
 
 pub use pages::IndexPage;
 
-
 #[Payload(URLEncoded/D)]
 #[derive(Debug)]
 pub struct CreateShortenURLForm<'req> {
     pub url: Cow<'req, str>,
 }
-
 
 pub enum CreatedOrErrorPage {
     Created { shorten_url: String },
@@ -28,7 +26,6 @@ impl IntoResponse for CreatedOrErrorPage {
         }
     }
 }
-
 
 pub struct KV(SendWrapper<KvStore>);
 impl<'req> FromRequest<'req> for KV {

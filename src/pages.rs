@@ -39,8 +39,8 @@ page!(Layout = ({ content: String }) => r#"<!DOCTYPE html>
         </header>
         <div>{{{ content }}}</div>
     </body>
-    </html>"#
-);
+    </html>
+"#);
 
 page!(IndexPage = (;;) => r#"
     <div>
