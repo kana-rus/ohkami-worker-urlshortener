@@ -72,12 +72,7 @@ struct CreateShortenURLForm<'req> {
 #[template(src=r#"
 <div>
     <h2>Created!</h2>
-    <input
-        autofocus
-        type="text"
-        value="{{ shorten_url }}"
-        style="width: 80%;"
-    />
+    <a href="{{ shorten_url }}">Access to it</a>
 </div>
 "#)]
 struct CreatedPage {
