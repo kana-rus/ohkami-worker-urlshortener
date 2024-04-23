@@ -1,7 +1,6 @@
 use crate::AppError;
 use crate::js;
 use std::sync::Arc;
-use worker::send::SendWrapper;
 
 
 #[allow(non_snake_case)]
@@ -24,7 +23,7 @@ pub async fn create_key(
 
         worker::console_log!("generated key: `{key}`");
         
-        if kv.get(&key).text().await.map_err(|e| AppError::KV(SendWrapper(e)))?.is_none() {
+        if kv.get(&key).text().await.map_err(AppError::kv)?.is_none() {
             break key
         }
     });
@@ -42,4 +41,12 @@ pub async fn create_key(
     });
 
     Ok(new_key)
+}
+
+pub async fn get_original_url(
+    kv:          worker::kv::KvStore,
+    shorten_url: &str,
+) -> Result<Option<String>, AppError> {
+    kv.get(shorten_url).text().await
+        .map_err(AppError::kv)
 }

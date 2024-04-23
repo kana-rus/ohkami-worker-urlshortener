@@ -1,16 +1,14 @@
 mod errors;
-use errors::AppError;
-
 mod fangs;
-use fangs::LayoutFang;
-
 mod helpers;
-use helpers::{create_key, AssertSend};
-
 mod js;
 
+use errors::AppError;
+use fangs::LayoutFang;
+use helpers::{create_key, get_original_url};
+
 use ohkami::prelude::*;
-use ohkami::typed::Payload;
+use ohkami::typed::{Payload, status};
 use ohkami::builtin::payload::URLEncoded;
 use yarte::Template;
 use worker::Url;
@@ -23,8 +21,12 @@ async fn my_worker() -> Ohkami {
     console_error_panic_hook::set_once();
 
     Ohkami::with(LayoutFang, (
-        "/".GET(index),
-        "/create".POST(create),
+        "/"
+            .GET(index),
+        "/create"
+            .POST(create),
+        "/:shorten_url"
+            .GET(redirect_from_shorten_url),
     ))
 }
 
@@ -61,6 +63,7 @@ async fn index() -> IndexPage {
 
 
 #[Payload(URLEncoded/D)]
+#[derive(Debug)]
 struct CreateShortenURLForm<'req> {
     url: Cow<'req, str>,
 }
@@ -98,15 +101,33 @@ async fn create(
         "Invalid URL: {e}"
     )))?;
 
-    worker::console_log!("Got URL: {}", &form.url);
+    worker::console_log!("Got form: {form:?}");
 
-    let key = AssertSend(worker::send::SendFuture::new(create_key(
-        ctx,
-        env.kv("KV").unwrap(),
-        &form.url
-    ))).await?;
+    let key = worker::send::SendFuture::new(
+        create_key(
+            ctx,
+            env.kv("KV").unwrap(),
+            &form.url
+        )
+    ).await?;
     
     Ok(CreatedPage {
         shorten_url: format!("/{key}"),
     })
+}
+
+
+async fn redirect_from_shorten_url(
+    shorten_url: &str,
+    env:         &worker::Env,
+) -> Result<status::Found, AppError> {
+    match worker::send::SendFuture::new(
+        get_original_url(
+            env.kv("KV").unwrap(),
+            shorten_url
+        )
+    ).await? {
+        Some(url) => Ok(status::Found::at(url)),
+        None      => Ok(status::Found::at("/")),
+    }
 }

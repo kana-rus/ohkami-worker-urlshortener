@@ -8,6 +8,11 @@ pub enum AppError {
     Validation(String),
     KV(SendWrapper<worker::kv::KvError>),
 }
+impl AppError {
+    pub fn kv(kv_error: worker::kv::KvError) -> Self {
+        Self::KV(SendWrapper(kv_error))
+    }
+}
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
