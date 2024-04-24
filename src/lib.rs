@@ -11,10 +11,11 @@ use models::{IndexPage, CreatedOrErrorPage, CreateShortenURLForm, KV};
 use ohkami::prelude::*;
 use ohkami::typed::status;
 
-#[cfg(not(feature = "DEBUG"))]
-const ORIGIN: &str = "https://ohkami-urlshortener.kanarus.workers.dev";
-#[cfg(feature = "DEBUG")]
-const ORIGIN: &str = "http://localhost:8787";
+const ORIGIN: &str = if cfg!(feature = "DEBUG") {
+    "http://localhost:8787"
+} else {
+    "https://ohkami-urlshortener.kanarus.workers.dev"
+};
 
 
 #[ohkami::worker]
