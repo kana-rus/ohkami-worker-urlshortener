@@ -6,10 +6,15 @@ mod pages;
 
 use errors::AppError;
 use fangs::{LayoutFang, CSRFang};
-use models::{IndexPage, CreatedOrErrorPage, CreateShortenURLForm, KV, Host};
+use models::{IndexPage, CreatedOrErrorPage, CreateShortenURLForm, KV};
 
 use ohkami::prelude::*;
 use ohkami::typed::status;
+
+#[cfg(not(feature = "DEBUG"))]
+const ORIGIN: &str = "https://ohkami-urlshortener.kanarus.workers.dev";
+#[cfg(feature = "DEBUG")]
+const ORIGIN: &str = "http://localhost:8787";
 
 
 #[ohkami::worker]
@@ -43,7 +48,6 @@ async fn redirect_from_shorten_url(shorten_url: &str,
 
 async fn create(
     kv:   KV,
-    host: Host<'_>,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedOrErrorPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -65,6 +69,6 @@ async fn create(
     kv.put(&key.clone(), form.url).await?;
     
     Ok(CreatedOrErrorPage::Created {
-        shorten_url: format!("https://{host}/{key}"),
+        shorten_url: format!("{ORIGIN}/{key}"),
     })
 }

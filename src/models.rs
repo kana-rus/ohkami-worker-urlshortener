@@ -27,19 +27,6 @@ impl IntoResponse for CreatedOrErrorPage {
     }
 }
 
-pub struct Host<'req>(&'req str);
-impl<'req> FromRequest<'req> for Host<'req> {
-    type Error = std::convert::Infallible;
-    fn from_request(req: &'req Request) -> Option<Result<Self, Self::Error>> {
-        req.headers.Host().map(Self).map(Ok)
-    }
-}
-impl std::fmt::Display for Host<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.0)
-    }
-}
-
 pub struct KV(SendWrapper<KvStore>);
 impl<'req> FromRequest<'req> for KV {
     type Error = AppError;

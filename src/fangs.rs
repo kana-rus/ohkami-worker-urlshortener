@@ -19,12 +19,12 @@ impl FangAction for LayoutFang {
 pub struct CSRFang;
 impl FangAction for CSRFang {
     async fn fore<'a>(&'a self, req: &'a mut Request) -> Result<(), Response> {
-        let referer = req.headers.Referer();
-        let host    = req.headers.Host().ok_or_else(|| Response::BadRequest())?;
-        (referer == Some(&format!("https://{host}/")))
+        let origin = req.headers.Origin()
+            .ok_or_else(|| Response::BadRequest())?;
+        (origin == crate::ORIGIN)
             .then_some(())
             .ok_or_else(|| {
-                worker::console_warn!("Unexpected request from {}", referer.unwrap_or("no referer"));
+                worker::console_warn!("Unexpected request from {origin}");
                 Response::Forbidden()
             })
     }
