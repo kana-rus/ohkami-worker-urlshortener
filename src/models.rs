@@ -41,7 +41,7 @@ impl KV {
         key: &'kv str,
     ) -> impl Future<Output = Result<Option<String>, AppError>> + Send + 'kv {
         SendFuture::new(async move {
-            self.0.get(key.as_ref())
+            self.0.get(key)
                 .text().await
                 .map_err(AppError::kv)
         })
@@ -52,7 +52,7 @@ impl KV {
         value: impl ToRawKvValue + 'kv,
     ) -> impl Future<Output = Result<(), AppError>> + Send + 'kv {
         SendFuture::new(async move {
-            self.0.put(key.as_ref(), value).unwrap()
+            self.0.put(key, value).unwrap()
                 .execute().await.map_err(AppError::kv)
         })
     }
