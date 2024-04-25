@@ -1,8 +1,8 @@
 use ohkami::{Response, IntoResponse};
 use worker::send::SendWrapper;
+use crate::pages;
 
 
-#[allow(unused)]
 pub enum AppError {
     RenderingHTML(yarte::Error),
     Validation(String),
@@ -24,7 +24,7 @@ impl IntoResponse for AppError {
             }
             Self::Validation(msg) => {
                 worker::console_error!("Validation failed: {msg}");
-                Response::BadRequest()
+                pages::ErrorPage.into_response()
             }
             Self::KV(err) => {
                 worker::console_error!("Error from KV: {err}");

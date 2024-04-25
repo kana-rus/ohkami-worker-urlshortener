@@ -6,7 +6,7 @@ mod pages;
 
 use errors::AppError;
 use fangs::{LayoutFang, CSRFang};
-use models::{IndexPage, CreatedOrErrorPage, CreateShortenURLForm, KV};
+use models::{IndexPage, CreatedPage, CreateShortenURLForm, KV};
 
 use ohkami::prelude::*;
 use ohkami::typed::status;
@@ -50,9 +50,9 @@ async fn redirect_from_shorten_url(shorten_url: &str,
 async fn create(
     kv:   KV,
     form: CreateShortenURLForm<'_>,
-) -> Result<CreatedOrErrorPage, AppError> {
+) -> Result<CreatedPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
-        return Ok(CreatedOrErrorPage::Error)
+        return Err(AppError::Validation(format!("Invalid URL: {}", form.url)))
     }
 
     worker::console_log!("Got form: {form:?}");
@@ -69,7 +69,7 @@ async fn create(
     };
     kv.put(&key.clone(), form.url).await?;
     
-    Ok(CreatedOrErrorPage::Created {
+    Ok(CreatedPage {
         shorten_url: format!("{ORIGIN}/{key}"),
     })
 }

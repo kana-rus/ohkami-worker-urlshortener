@@ -1,4 +1,4 @@
-use ohkami::{Response, IntoResponse, Request, FromRequest};
+use ohkami::{Request, FromRequest};
 use ohkami::{typed::Payload, builtin::payload::URLEncoded};
 use worker::send::{SendFuture, SendWrapper};
 use worker::kv::{KvStore, ToRawKvValue};
@@ -8,23 +8,12 @@ use crate::{pages, AppError};
 
 pub use pages::IndexPage;
 
+pub use pages::CreatedPage;
+
 #[Payload(URLEncoded/D)]
 #[derive(Debug)]
 pub struct CreateShortenURLForm<'req> {
     pub url: Cow<'req, str>,
-}
-
-pub enum CreatedOrErrorPage {
-    Created { shorten_url: String },
-    Error,
-}
-impl IntoResponse for CreatedOrErrorPage {
-    fn into_response(self) -> Response {
-        match self {
-            Self::Created { shorten_url } => pages::CreatedPage { shorten_url }.into_response(),
-            Self::Error                   => pages::ErrorPage.into_response(),
-        }
-    }
 }
 
 pub struct KV(SendWrapper<KvStore>);
