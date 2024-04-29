@@ -6,7 +6,7 @@ mod pages;
 
 use errors::AppError;
 use fangs::{LayoutFang, CSRFang};
-use models::{IndexPage, CreatedPage, CreateShortenURLForm, KV};
+use models::{IndexPage, CreatedPage, CreateShortenURLForm};
 
 use ohkami::prelude::*;
 use ohkami::typed::status;
@@ -17,7 +17,6 @@ const ORIGIN: &str = if cfg!(feature = "DEBUG") {
     "https://ohkami-urlshortener.kanarus.workers.dev"
 };
 
-
 #[ohkami::worker]
 async fn my_worker() -> Ohkami {
     #[cfg(feature = "DEBUG")]
@@ -26,8 +25,8 @@ async fn my_worker() -> Ohkami {
     Ohkami::with(LayoutFang, (
         "/"
             .GET(index),
-        "/:shorten_url"
-            .GET(redirect_from_shorten_url),
+        "/:key"
+            .GET(redirect),
         "/create".By(Ohkami::with(CSRFang,
             "/".POST(create),
         ))
@@ -38,17 +37,20 @@ async fn index() -> IndexPage {
     IndexPage
 }
 
-async fn redirect_from_shorten_url(shorten_url: &str,
-    kv: KV,
+#[worker::send]
+async fn redirect(key: &str,
+    env: &worker::Env,
 ) -> Result<status::Found, AppError> {
-    match kv.get(shorten_url).await? {
+    let kv = env.kv("KV").map_err(AppError::Worker)?;
+    match kv.get(key).text().await.map_err(AppError::kv)? {
         Some(url) => Ok(status::Found::at(url)),
         None      => Ok(status::Found::at("/")),
     }
 }
 
+#[worker::send]
 async fn create(
-    kv:   KV,
+    env: &worker::Env,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -57,17 +59,20 @@ async fn create(
 
     worker::console_log!("Got form: {form:?}");
 
+    let kv = env.kv("KV").map_err(AppError::Worker)?;
+
     let key = loop {
         let key = std::sync::Arc::new({
             let mut uuid = js::randomUUID();
             unsafe { uuid.as_mut_vec().truncate(6) }
             uuid
         });
-        if kv.get(&*key).await?.is_none() {
+        if kv.get(&*key).text().await.map_err(AppError::kv)?.is_none() {
             break key
         }
     };
-    kv.put(&key.clone(), form.url).await?;
+    kv.put(&key.clone(), form.url).map_err(AppError::kv)?
+        .execute().await.map_err(AppError::kv)?;
     
     Ok(CreatedPage {
         shorten_url: format!("{ORIGIN}/{key}"),
