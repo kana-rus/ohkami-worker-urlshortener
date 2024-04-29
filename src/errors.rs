@@ -1,18 +1,12 @@
 use ohkami::{Response, IntoResponse};
-use worker::send::SendWrapper;
 use crate::pages;
 
 
 pub enum AppError {
     RenderingHTML(yarte::Error),
     Validation(String),
-    KV(SendWrapper<worker::kv::KvError>),
+    KV(worker::kv::KvError),
     Worker(worker::Error),
-}
-impl AppError {
-    pub fn kv(kv_error: worker::kv::KvError) -> Self {
-        Self::KV(SendWrapper(kv_error))
-    }
 }
 
 impl IntoResponse for AppError {
@@ -35,5 +29,16 @@ impl IntoResponse for AppError {
                 Response::InternalServerError()
             }
         }
+    }
+}
+
+impl From<worker::Error> for AppError {
+    fn from(e: worker::Error) -> Self {
+        Self::Worker(e)
+    }
+}
+impl From<worker::kv::KvError> for AppError {
+    fn from(e: worker::kv::KvError) -> Self {
+        Self::KV(e)
     }
 }
