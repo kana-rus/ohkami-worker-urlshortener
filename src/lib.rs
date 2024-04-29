@@ -41,8 +41,8 @@ async fn index() -> IndexPage {
 async fn redirect(key: &str,
     env: &worker::Env,
 ) -> Result<status::Found, AppError> {
-    let kv = env.kv("KV").map_err(AppError::Worker)?;
-    match kv.get(key).text().await.map_err(AppError::kv)? {
+    let kv = env.kv("KV")?;
+    match kv.get(key).text().await? {
         Some(url) => Ok(status::Found::at(url)),
         None      => Ok(status::Found::at("/")),
     }
@@ -50,7 +50,7 @@ async fn redirect(key: &str,
 
 #[worker::send]
 async fn create(
-    env: &worker::Env,
+    env:  &worker::Env,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -59,20 +59,16 @@ async fn create(
 
     worker::console_log!("Got form: {form:?}");
 
-    let kv = env.kv("KV").map_err(AppError::Worker)?;
-
+    let kv = env.kv("KV")?;
     let key = loop {
         let key = std::sync::Arc::new({
-            let mut uuid = js::randomUUID();
-            unsafe { uuid.as_mut_vec().truncate(6) }
-            uuid
+            js::randomUUID().split_off(6)
         });
-        if kv.get(&*key).text().await.map_err(AppError::kv)?.is_none() {
+        if kv.get(&*key).text().await?.is_none() {
             break key
         }
     };
-    kv.put(&key.clone(), form.url).map_err(AppError::kv)?
-        .execute().await.map_err(AppError::kv)?;
+    kv.put(&key.clone(), form.url)?.execute().await?;
     
     Ok(CreatedPage {
         shorten_url: format!("{ORIGIN}/{key}"),
