@@ -62,7 +62,9 @@ async fn create(
     let kv = env.kv("KV")?;
     let key = loop {
         let key = std::sync::Arc::new({
-            js::randomUUID().split_off(6)
+            let mut uuid = js::randomUUID();
+            uuid.truncate(6);
+            uuid
         });
         if kv.get(&*key).text().await?.is_none() {
             break key
