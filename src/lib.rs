@@ -6,7 +6,7 @@ mod pages;
 
 use errors::AppError;
 use fangs::{LayoutFang, CSRFang};
-use models::{IndexPage, CreatedPage, CreateShortenURLForm};
+use models::{IndexPage, CreatedPage, CreateShortenURLForm, Worker};
 
 use ohkami::prelude::*;
 use ohkami::typed::status;
@@ -39,10 +39,10 @@ async fn index() -> IndexPage {
 
 #[worker::send]
 async fn redirect(key: &str,
-    env: &worker::Env,
+    w: Worker<'_>,
 ) -> Result<status::Found, AppError> {
-    let kv = env.kv("KV").map_err(AppError::Worker)?;
-    match kv.get(key).text().await.map_err(AppError::kv)? {
+    let kv = w.KV("KV")?;
+    match kv.get(key).await? {
         Some(url) => Ok(status::Found::at(url)),
         None      => Ok(status::Found::at("/")),
     }
@@ -50,7 +50,7 @@ async fn redirect(key: &str,
 
 #[worker::send]
 async fn create(
-    env: &worker::Env,
+    w:    Worker<'_>,
     form: CreateShortenURLForm<'_>,
 ) -> Result<CreatedPage, AppError> {
     if let Err(_) = worker::Url::parse(&form.url) {
@@ -59,20 +59,16 @@ async fn create(
 
     worker::console_log!("Got form: {form:?}");
 
-    let kv = env.kv("KV").map_err(AppError::Worker)?;
-
+    let kv = w.KV("KV")?;
     let key = loop {
-        let key = std::sync::Arc::new({
-            let mut uuid = js::randomUUID();
-            unsafe { uuid.as_mut_vec().truncate(6) }
-            uuid
-        });
-        if kv.get(&*key).text().await.map_err(AppError::kv)?.is_none() {
+        let key = std::sync::Arc::new(
+            js::randomUUID().split_off(6)
+        );
+        if kv.get(&*key).await?.is_none() {
             break key
         }
     };
-    kv.put(&key.clone(), form.url).map_err(AppError::kv)?
-        .execute().await.map_err(AppError::kv)?;
+    kv.put(&key.clone(), form.url).await?;
     
     Ok(CreatedPage {
         shorten_url: format!("{ORIGIN}/{key}"),

@@ -364,6 +364,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "night_worker"
+version = "0.1.0-rc"
+source = "git+https://github.com/kana-rus/night_worker.git#9d4a9a4229967ded131d573433f7679198d5f7bd"
+dependencies = [
+ "serde",
+ "worker",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -383,8 +392,8 @@ dependencies = [
 
 [[package]]
 name = "ohkami"
-version = "0.17.0"
-source = "git+https://github.com/kana-rus/ohkami.git#a05ab043faf2e35ebacfdebd20b241f72b56fce3"
+version = "0.17.2"
+source = "git+https://github.com/kana-rus/ohkami.git#9cce3c9afbd0278f047f044e8d199042f1e88f52"
 dependencies = [
  "byte_reader",
  "hmac",
@@ -399,8 +408,8 @@ dependencies = [
 
 [[package]]
 name = "ohkami_lib"
-version = "0.2.1"
-source = "git+https://github.com/kana-rus/ohkami.git#a05ab043faf2e35ebacfdebd20b241f72b56fce3"
+version = "0.2.2"
+source = "git+https://github.com/kana-rus/ohkami.git#9cce3c9afbd0278f047f044e8d199042f1e88f52"
 dependencies = [
  "byte_reader",
  "percent-encoding",
@@ -410,7 +419,7 @@ dependencies = [
 [[package]]
 name = "ohkami_macros"
 version = "0.7.1"
-source = "git+https://github.com/kana-rus/ohkami.git#a05ab043faf2e35ebacfdebd20b241f72b56fce3"
+source = "git+https://github.com/kana-rus/ohkami.git#9cce3c9afbd0278f047f044e8d199042f1e88f52"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -422,6 +431,7 @@ name = "ohkami_worker"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "night_worker",
  "ohkami",
  "wasm-bindgen",
  "worker",
@@ -564,9 +574,9 @@ checksum = "92d43fe69e652f3df9bdc2b85b2854a0825b86e4fb76bc44d945137d053639ca"
 
 [[package]]
 name = "serde"
-version = "1.0.198"
+version = "1.0.199"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9846a40c979031340571da2545a4e5b7c4163bdae79b301d5f86d03979451fcc"
+checksum = "0c9f6e76df036c77cd94996771fb40db98187f096dd0b9af39c6c6e452ba966a"
 dependencies = [
  "serde_derive",
 ]
@@ -595,9 +605,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.198"
+version = "1.0.199"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e88edab869b01783ba905e7d0153f9fc1a6505a96e4ad3018011eedb838566d9"
+checksum = "11bd257a6541e141e42ca6d24ae26f7714887b47e89aa739099104c7e4d3b7fc"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -758,9 +768,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-width"
-version = "0.1.11"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
+checksum = "68f5e5f3158ecfd4b8ff6fe086db7c8467a2dfdac97fe420f2b7c4aa97af66d6"
 
 [[package]]
 name = "unicode-xid"
