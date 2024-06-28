@@ -8,6 +8,7 @@ impl FangAction for LayoutFang {
     async fn back<'a>(&'a self, res: &'a mut Response) {
         if res.headers.ContentType().is_some_and(|ct| ct.starts_with("text/html")) {
             let content = res.drop_content()
+                .into_bytes()
                 .map(|bytes| String::from_utf8(bytes.into_owned()).unwrap())
                 .unwrap_or_else(String::new);
             *res = Layout { content }.into_response();

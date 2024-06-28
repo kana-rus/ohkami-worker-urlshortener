@@ -16,7 +16,7 @@ DEBUG = ["dep:console_error_panic_hook"]
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
 ohkami = { git = "https://github.com/kana-rus/ohkami.git", features = ["rt_worker"] }
-worker = { version = "0.1.0" }
+worker = { version = "0.3.0" }
 
 yarte        = { version = "0.15.7" }
 wasm-bindgen = { version = "0.2.92" }
